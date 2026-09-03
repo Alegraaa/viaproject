@@ -5,13 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $products = Product::latest()->paginate(10);
@@ -19,77 +16,83 @@ class ProductController extends Controller
         return view('products.index', compact('products'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('products.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreProductRequest $request)
     {
-        $data = $request->validated();
+        try {
+            DB::beginTransaction();
 
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('products', 'public');
+            $data = $request->validated();
+            unset($data['image']);
+
+            $product = Product::create($data);
+
+            if ($request->hasFile('image')) {
+                $product->addMediaFromRequest('image')->toMediaCollection('images');
+            }
+
+            DB::commit();
+
+            return redirect()->route('products.index')->with('success', 'Product berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Gagal menambahkan product: ' . $e->getMessage());
         }
-
-        Product::create($data);
-
-        return redirect()->route('products.index')->with('success', 'Product berhasil ditambahkan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Product $product)
     {
         return view('products.show', compact('product'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Product $product)
     {
         return view('products.edit', compact('product'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateProductRequest $request, Product $product)
     {
-        $data = $request->validated();
+        try {
+            DB::beginTransaction();
 
-        if ($request->hasFile('image')) {
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+            $data = $request->validated();
+            unset($data['image']);
+
+            $product->update($data);
+
+            if ($request->hasFile('image')) {
+                $product->addMediaFromRequest('image')->toMediaCollection('images');
             }
 
-            $data['image'] = $request->file('image')->store('products', 'public');
+            DB::commit();
+
+            return redirect()->route('products.index')->with('success', 'Product berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Gagal memperbarui product: ' . $e->getMessage());
         }
-
-        $product->update($data);
-
-        return redirect()->route('products.index')->with('success', 'Product berhasil diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Product $product)
     {
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+        try {
+            DB::beginTransaction();
+
+            $product->delete();
+
+            DB::commit();
+
+            return redirect()->route('products.index')->with('success', 'Product berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Gagal menghapus product: ' . $e->getMessage());
         }
-
-        $product->delete();
-
-        return redirect()->route('products.index')->with('success', 'Product berhasil dihapus.');
     }
 }

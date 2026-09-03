@@ -52,8 +52,8 @@
                     <div class="mb-6">
                         <label class="block mb-2 text-sm font-medium text-gray-900">Gambar Product</label>
 
-                        @if ($product->image)
-                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
+                        @if ($product->getFirstMediaUrl('images'))
+                            <img src="{{ $product->getFirstMediaUrl('images') }}" alt="{{ $product->name }}"
                                 class="w-32 h-32 object-cover rounded-lg mb-3 border border-gray-200">
                         @endif
 

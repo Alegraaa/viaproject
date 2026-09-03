@@ -10,8 +10,8 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-xl border border-gray-100">
 
                 <div class="h-56 bg-gray-100">
-                    @if ($product->image)
-                        <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
+                    @if ($product->getFirstMediaUrl('images'))
+                        <img src="{{ $product->getFirstMediaUrl('images') }}" alt="{{ $product->name }}"
                             class="w-full h-full object-cover">
                     @else
                         <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm">
@@ -41,10 +41,12 @@
                     </dl>
 
                     <div class="mt-6 flex items-center gap-3">
-                        <a href="{{ route('products.edit', $product) }}"
-                            class="text-white bg-yellow-500 hover:bg-yellow-600 font-medium rounded-lg text-sm px-4 py-2 transition">
-                            Edit
-                        </a>
+                        @role('admin')
+                            <a href="{{ route('products.edit', $product) }}"
+                                class="text-white bg-yellow-500 hover:bg-yellow-600 font-medium rounded-lg text-sm px-4 py-2 transition">
+                                Edit
+                            </a>
+                        @endrole
                         <a href="{{ route('products.index') }}"
                             class="text-gray-600 hover:text-gray-900 text-sm">
                             Kembali
